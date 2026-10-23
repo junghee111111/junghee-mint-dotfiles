@@ -29,7 +29,16 @@ git clone https://github.com/<your-username>/dotfiles.git ~/dotfiles
 cd ~/dotfiles
 ```
 
-### 2단계: 필수 앱(Vivaldi, VS Code, Godot Mono 등) 일괄 설치 (선택)
+### 2단계: RAM 압축(ZRAM zstd) & 8GB Swap 세팅 (선택 / 권장)
+```bash
+./setup-memory.sh
+```
+> **적용되는 최적화**:
+> - **ZRAM (RAM 압축)**: `zstd` 초고속 압축 알고리즘, 물리 RAM의 100% 용량, 1순위(우선순위 100)
+> - **SSD 스왑파일**: 8GB `/swapfile` 자동 생성 및 `/etc/fstab` 등록 (2순위 보조 스왑)
+> - **커널 튜닝**: `vm.swappiness=180`, `vm.page-cluster=0` (지연시간 제로), `vm.vfs_cache_pressure=50` (캐시 보존)
+
+### 3단계: 필수 앱(Vivaldi, VS Code, Godot Mono 등) 일괄 설치 (선택)
 ```bash
 ./install-apps.sh
 ```
@@ -39,7 +48,7 @@ cd ~/dotfiles
 > - .NET SDK 8.0 & Godot Engine (.NET/Mono 버전 자동 셋업)
 > - Anki, PCSX2, Blender, Discord, VLC (Flathub)
 
-### 3단계: KDE 환경 및 단축키 설정 복원
+### 4단계: KDE 환경 및 단축키 설정 복원
 ```bash
 ./install.sh
 ```
