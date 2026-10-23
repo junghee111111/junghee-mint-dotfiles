@@ -29,7 +29,17 @@ git clone https://github.com/<your-username>/dotfiles.git ~/dotfiles
 cd ~/dotfiles
 ```
 
-### 2단계: 자동 복원 스크립트 실행
+### 2단계: 필수 앱(Vivaldi, VS Code, Godot Mono 등) 일괄 설치 (선택)
+```bash
+./install-apps.sh
+```
+> **자동 설치 목록**:
+> - Vivaldi Browser (공식 APT)
+> - Visual Studio Code (공식 APT)
+> - .NET SDK 8.0 & Godot Engine (.NET/Mono 버전 자동 셋업)
+> - Anki, PCSX2, Blender, Discord, VLC (Flathub)
+
+### 3단계: KDE 환경 및 단축키 설정 복원
 ```bash
 ./install.sh
 ```
