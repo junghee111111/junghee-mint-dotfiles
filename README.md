@@ -47,6 +47,7 @@ cd ~/dotfiles
 > - **ZRAM (초고속 실시간 압축)**: `zstd` 알고리즘, 최우선순위 100
 > - **레이턴시 제로**: `vm.page-cluster = 0` (1페이지 단위 개별 압축/해제로 스왑 렉 방지)
 > - **반응성 극대화**: `vm.vfs_cache_pressure = 50` (디렉터리/파일 캐시 보존)
+> - **전원 연동 최대 성능**: 노트북 전원(AC) 연결 시 `performance` 거버너, 최대 부스트 클럭(Intel Turbo Boost / AMD Core Boost), EPP `performance` 자동 고정 (udev & systemd 자동화)
 
 ### 3단계: 필수 앱(Vivaldi, VS Code, Godot Mono 등) 일괄 설치 (선택)
 ```bash
