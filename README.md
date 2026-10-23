@@ -29,14 +29,24 @@ git clone https://github.com/<your-username>/dotfiles.git ~/dotfiles
 cd ~/dotfiles
 ```
 
-### 2단계: RAM 압축(ZRAM zstd) & 8GB Swap 세팅 (선택 / 권장)
-```bash
-./setup-memory.sh
-```
-> **적용되는 최적화**:
-> - **ZRAM (RAM 압축)**: `zstd` 초고속 압축 알고리즘, 물리 RAM의 100% 용량, 1순위(우선순위 100)
-> - **SSD 스왑파일**: 8GB `/swapfile` 자동 생성 및 `/etc/fstab` 등록 (2순위 보조 스왑)
-> - **커널 튜닝**: `vm.swappiness=180`, `vm.page-cluster=0` (지연시간 제로), `vm.vfs_cache_pressure=50` (캐시 보존)
+### 2단계: RAM 압축(ZRAM zstd) & Swap 최적화 (시스템 사양에 맞춰 선택)
+
+- **8GB 램 시스템**:
+  ```bash
+  ./setup-memory-8gb.sh
+  ```
+  *(ZRAM 8GB + SSD 스왑 8GB + 적극적 ZRAM 활용 swappiness=180)*
+
+- **16GB 램 시스템**:
+  ```bash
+  ./setup-memory-16gb.sh
+  ```
+  *(ZRAM 16GB + SSD 스왑 16GB + 균형 튜닝 swappiness=160, dirty_ratio=15)*
+
+> **공통 적용 최적화**:
+> - **ZRAM (초고속 실시간 압축)**: `zstd` 알고리즘, 최우선순위 100
+> - **레이턴시 제로**: `vm.page-cluster = 0` (1페이지 단위 개별 압축/해제로 스왑 렉 방지)
+> - **반응성 극대화**: `vm.vfs_cache_pressure = 50` (디렉터리/파일 캐시 보존)
 
 ### 3단계: 필수 앱(Vivaldi, VS Code, Godot Mono 등) 일괄 설치 (선택)
 ```bash
