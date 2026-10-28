@@ -17,15 +17,18 @@ echo -e "대상 사용자: ${GREEN}${CURRENT_USER}${NC} (UID: ${CURRENT_UID})"
 echo -e "Dotfiles 경로: ${GREEN}${DOTFILES_DIR}${NC}\n"
 
 # 1. 디렉터리 준비
-echo -e "${BLUE}[1/5] 대상 디렉터리 생성 중...${NC}"
+echo -e "${BLUE}[1/7] 대상 디렉터리 생성 중...${NC}"
 mkdir -p "${USER_HOME}/.config/opencode"
+mkdir -p "${USER_HOME}/.config/fcitx5"
+mkdir -p "${USER_HOME}/.config/plasma-workspace/env"
+mkdir -p "${USER_HOME}/.config/autostart"
 mkdir -p "${USER_HOME}/.local/share/aurorae/themes"
 mkdir -p "${USER_HOME}/.local/share/color-schemes"
 mkdir -p "${USER_HOME}/.local/share/plasma/desktoptheme"
 mkdir -p "${USER_HOME}/.local/share/plasma/look-and-feel"
 
 # 2. KDE 테마 및 장식 파일 복사
-echo -e "${BLUE}[2/5] 커스텀 테마(Irixium 네이비 블루 및 버튼) 복사 중...${NC}"
+echo -e "${BLUE}[2/7] 커스텀 테마(Irixium 네이비 블루 및 버튼) 복사 중...${NC}"
 if [ -d "${DOTFILES_DIR}/local-share/aurorae/themes/Irixium" ]; then
     cp -r "${DOTFILES_DIR}/local-share/aurorae/themes/Irixium" "${USER_HOME}/.local/share/aurorae/themes/"
 fi
@@ -39,14 +42,68 @@ if [ -d "${DOTFILES_DIR}/local-share/plasma/look-and-feel/Irixium" ]; then
     cp -r "${DOTFILES_DIR}/local-share/plasma/look-and-feel/Irixium" "${USER_HOME}/.local/share/plasma/look-and-feel/"
 fi
 
-# 3. 설정 파일(단축키, 창 장식, OpenCode) 복사
-echo -e "${BLUE}[3/5] 설정 파일(단축키 및 OpenCode 테마) 복사 중...${NC}"
+# 3. 설정 파일(단축키, 창 장식, OpenCode, 한글 입력기) 복사
+echo -e "${BLUE}[3/7] 설정 파일(단축키, OpenCode, fcitx5) 복사 중...${NC}"
 cp "${DOTFILES_DIR}/config/kglobalshortcutsrc" "${USER_HOME}/.config/"
 cp "${DOTFILES_DIR}/config/kwinrc" "${USER_HOME}/.config/"
 cp "${DOTFILES_DIR}/config/opencode/cli.json" "${USER_HOME}/.config/opencode/"
 
-# 4. NetworkManager 캡티브 포털 자동 팝업 설정 (sudo 필요)
-echo -e "${BLUE}[4/5] 캡티브 포털 자동 팝업 설정 적용 중 (sudo 권한 필요)...${NC}"
+# fcitx5 + 한글 입력기 설정 (Right Alt = 한/영 전환)
+cp "${DOTFILES_DIR}/config/fcitx5/profile" "${USER_HOME}/.config/fcitx5/"
+cp "${DOTFILES_DIR}/config/fcitx5/config" "${USER_HOME}/.config/fcitx5/"
+cp "${DOTFILES_DIR}/config/plasma-workspace/env/fcitx5.sh" "${USER_HOME}/.config/plasma-workspace/env/"
+cp "${DOTFILES_DIR}/config/autostart/org.fcitx.Fcitx5.desktop" "${USER_HOME}/.config/autostart/"
+# KDE 키보드 레이아웃: korean:ralt_hangul 옵션 포함
+if [ -f "${DOTFILES_DIR}/config/kxkbrc" ]; then
+    cp "${DOTFILES_DIR}/config/kxkbrc" "${USER_HOME}/.config/"
+fi
+
+# 4. 한글 입력기(fcitx5) 설치 (sudo 필요)
+echo -e "${BLUE}[4/7] 한글 입력기(fcitx5 + Hangul) 설치 중 (sudo 권한 필요)...${NC}"
+sudo -v
+sudo apt-get update -y
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    fcitx5 fcitx5-hangul fcitx5-config-qt \
+    fcitx5-frontend-gtk3 fcitx5-frontend-gtk4 fcitx5-frontend-qt5 \
+    kde-config-fcitx5 fonts-noto-cjk
+
+# 세션 입력기로 fcitx5 지정 (실패해도 계속 진행)
+if command -v im-config >/dev/null 2>&1; then
+    im-config -n fcitx5 >/dev/null 2>&1 || true
+fi
+# 현재 그래픽 세션에도 Right Alt 매핑 즉시 적용
+if [ -n "${DISPLAY:-}" ] && command -v setxkbmap >/dev/null 2>&1; then
+    setxkbmap -option korean:ralt_hangul 2>/dev/null || true
+fi
+echo -e "${GREEN}fcitx5 설치 완료! (Right Alt로 한/영 전환, 다시 로그인 후 적용)${NC}"
+
+# 5. Claude Code 설치 (사용자 계정, sudo 불필요)
+echo -e "${BLUE}[5/7] Claude Code 설치 중...${NC}"
+export PATH="${USER_HOME}/.local/bin:${PATH}"
+if command -v claude >/dev/null 2>&1; then
+    echo -e "${GREEN}Claude Code가 이미 설치되어 있습니다.${NC}"
+else
+    CLAUDE_INSTALLER="$(mktemp)"
+    if curl -fsSL https://claude.ai/install.sh -o "${CLAUDE_INSTALLER}"; then
+        if ! bash "${CLAUDE_INSTALLER}"; then
+            echo -e "${YELLOW}Claude Code 설치에 실패했습니다. 나중에 다시 시도하세요.${NC}"
+        fi
+        rm -f "${CLAUDE_INSTALLER}"
+    else
+        rm -f "${CLAUDE_INSTALLER}"
+        echo -e "${YELLOW}Claude Code 설치 스크립트를 내려받지 못했습니다. 네트워크를 확인하세요.${NC}"
+    fi
+fi
+# ~/.local/bin 이 PATH에 없으면 .bashrc에 추가
+if ! grep -q 'HOME/.local/bin' "${USER_HOME}/.bashrc" 2>/dev/null; then
+    printf '\n# Claude Code\nexport PATH="$HOME/.local/bin:$PATH"\n' >> "${USER_HOME}/.bashrc"
+fi
+if [ -x "${USER_HOME}/.local/bin/claude" ]; then
+    echo -e "${GREEN}Claude Code 설치 완료: $("${USER_HOME}/.local/bin/claude" --version 2>/dev/null || echo '버전 확인은 새 터미널에서')${NC}"
+fi
+
+# 6. NetworkManager 캡티브 포털 자동 팝업 설정 (sudo 필요)
+echo -e "${BLUE}[6/7] 캡티브 포털 자동 팝업 설정 적용 중 (sudo 권한 필요)...${NC}"
 if sudo -v 2>/dev/null; then
     sudo mkdir -p /etc/NetworkManager/conf.d
     sudo mkdir -p /etc/NetworkManager/dispatcher.d
@@ -67,8 +124,8 @@ else
     echo -e "${YELLOW}sudo 권한이 없어 NetworkManager 설정은 건너뛰었습니다.${NC}"
 fi
 
-# 5. 실행 중인 KDE 데몬 리로드
-echo -e "${BLUE}[5/5] KDE 세션 및 단축키 데몬 갱신 중...${NC}"
+# 7. 실행 중인 KDE 데몬 리로드
+echo -e "${BLUE}[7/7] KDE 세션 및 단축키 데몬 갱신 중...${NC}"
 if command -v qdbus >/dev/null 2>&1; then
     qdbus org.kde.KWin /KWin reconfigure 2>/dev/null || true
 fi
@@ -84,3 +141,6 @@ echo -e "  - Win+Shift+S (영역 지정 캡처 Spectacle)"
 echo -e "  - Irixium 네이비 블루 단색 + 선명한 흰색 버튼 테마"
 echo -e "  - OpenCode 반투명 터미널 배경 테마"
 echo -e "  - Wi-Fi 캡티브 포털 자동 감지 및 팝업"
+echo -e "  - fcitx5 한글 입력기 (Right Alt로 한/영 전환)"
+echo -e "  - Claude Code"
+echo -e "${YELLOW}※ fcitx5 입력기는 로그아웃 후 다시 로그인해야 적용됩니다.${NC}"

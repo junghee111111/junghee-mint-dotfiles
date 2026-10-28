@@ -1,0 +1,13 @@
+[$Version]
+update_info=kxkb.upd:remove-empty-lists,kxkb.upd:add-back-resetoptions,kxkb_variants.upd:split-variants
+
+[Layout]
+DisplayNames=
+LayoutList=us
+LayoutLoopCount=-1
+Model=pc105
+Options=korean:ralt_hangul
+ResetOldOptions=true
+ShowLayoutIndicator=true
+ShowSingle=false
+Use=true

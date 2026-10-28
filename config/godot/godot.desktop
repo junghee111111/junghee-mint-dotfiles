@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Godot Engine (.NET / C#)
+Comment=Godot Engine 실행 (Wayland 래퍼 경유)
+Exec=__GODOT_WRAPPER__ %f
+Icon=godot
+Terminal=false
+Categories=Development;IDE;
+MimeType=application/x-godot-project;
+StartupNotify=true
