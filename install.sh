@@ -18,7 +18,7 @@ echo -e "Dotfiles 경로: ${GREEN}${DOTFILES_DIR}${NC}\n"
 
 # 1. 디렉터리 준비
 echo -e "${BLUE}[1/7] 대상 디렉터리 생성 중...${NC}"
-mkdir -p "${USER_HOME}/.config/opencode"
+mkdir -p "${USER_HOME}/.config/opencode/themes"
 mkdir -p "${USER_HOME}/.config/fcitx5"
 mkdir -p "${USER_HOME}/.config/plasma-workspace/env"
 mkdir -p "${USER_HOME}/.config/autostart"
@@ -47,6 +47,10 @@ echo -e "${BLUE}[3/7] 설정 파일(단축키, OpenCode, fcitx5) 복사 중...${
 cp "${DOTFILES_DIR}/config/kglobalshortcutsrc" "${USER_HOME}/.config/"
 cp "${DOTFILES_DIR}/config/kwinrc" "${USER_HOME}/.config/"
 cp "${DOTFILES_DIR}/config/opencode/cli.json" "${USER_HOME}/.config/opencode/"
+# 커스텀 테마(터미널 반투명 배경 유지용)
+if [ -d "${DOTFILES_DIR}/config/opencode/themes" ]; then
+    cp -f "${DOTFILES_DIR}/config/opencode/themes/"*.json "${USER_HOME}/.config/opencode/themes/" 2>/dev/null || true
+fi
 
 # fcitx5 + 한글 입력기 설정 (Right Alt = 한/영 전환)
 cp "${DOTFILES_DIR}/config/fcitx5/profile" "${USER_HOME}/.config/fcitx5/"

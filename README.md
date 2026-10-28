@@ -16,6 +16,7 @@
    - `Ctrl + Alt + T`: 터미널 (`Konsole`)
 3. **OpenCode 설정**:
    - 터미널 반투명 배경을 투과시키는 `system` (dark) 테마
+   - `opencode-transparent` 테마: 기본/패널 배경을 `transparent`로 둬서 Konsole의 반투명 배경이 그대로 보임
 4. **네트워크 매니저 (캡티브 포털 자동 팝업)**:
    - 카페/공용 Wi-Fi 연결 시 로그인 창(`http://captive.apple.com`) 자동 팝업
 5. **한글 입력기 (fcitx5 + Hangul)**:
