@@ -29,6 +29,8 @@
 8. **GPU 가속 / 표시 경로 최적화** (`setup.sh`):
    - Blender(Flatpak): 호스트 NVIDIA 드라이버와 일치하는 `org.freedesktop.Platform.GL.nvidia-*` 확장 자동 설치
    - Godot: Xwayland 대신 네이티브 Wayland로 실행하는 래퍼(`~/.local/bin/godot`) 설치
+9. **한글 폰트** (`setup.sh`):
+   - `fonts-nanum` (나눔고딕/나눔명조), `fonts-noto-cjk` (Noto Sans/Serif CJK KR) 설치 + `fc-cache` 갱신
 
 ---
 
@@ -46,7 +48,7 @@ cd ~/dotfiles
 ```
 > 아래 3~5단계를 한 번에 실행합니다. 단, `install-apps.sh`(Vivaldi, VS Code, Godot 등)는 **제외**됩니다.
 > - `install.sh`: KDE 테마/단축키, **fcitx5 한글 입력기**, **Claude Code**, 캡티브 포털
-> - `setup.sh`: **GitHub SSH 키**, **Blender NVIDIA GPU**, **Godot Wayland 래퍼**, 입력기 상태 점검
+> - `setup.sh`: **GitHub SSH 키**, **Blender NVIDIA GPU**, **Godot Wayland 래퍼**, **한글 폰트**, 입력기 상태 점검
 > - RAM 용량을 자동 감지해 8GB/16GB 메모리 최적화 적용
 
 ### 2-1단계: 추가 환경 설정만 따로 실행 (`setup.sh`)
@@ -54,7 +56,7 @@ cd ~/dotfiles
 ./setup.sh                 # 전체
 ./setup.sh --dry-run       # 무엇을 바꿀지 미리 확인만
 ./setup.sh --no-verify     # Blender GPU 확인(수십 초) 생략
-./setup.sh --skip-blender  # 특정 항목만 건너뛰기 (--skip-ssh, --skip-godot)
+./setup.sh --skip-blender  # 특정 항목만 건너뛰기 (--skip-ssh, --skip-godot, --skip-fonts)
 ```
 > - **SSH**: 키가 없을 때만 `~/.ssh/id_ed25519_github` 를 생성하고 공개 키를 출력합니다.
 >   GitHub → Settings → SSH and GPG keys → New SSH key (**Authentication Key**) 에 등록한 뒤
@@ -65,6 +67,8 @@ cd ~/dotfiles
 > - **Godot**: Xwayland(X11) 창 경로는 프레임 표시가 소프트웨어로 처리되어 17 FPS 수준으로 떨어집니다.
 >   같은 씬이 Wayland 네이티브에서는 모니터 주사율(75 FPS)까지 나옵니다.
 >   X11로 강제하려면 `godot --display-driver x11 ...`.
+> - **폰트**: `fonts-nanum`(나눔고딕)과 `fonts-noto-cjk`(본고딕)를 설치하고 `fc-cache -f`로 갱신합니다.
+>   설치 여부는 `fc-list | grep -i nanum` 으로 확인할 수 있습니다.
 
 ### 3단계: RAM 압축(ZRAM zstd) & Swap 최적화 (시스템 사양에 맞춰 선택)
 

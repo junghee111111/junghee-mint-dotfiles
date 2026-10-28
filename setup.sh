@@ -9,14 +9,15 @@
 #    1. GitHub SSH 인증 키 생성 + ~/.ssh/config 등록
 #    2. Blender(Flatpak)가 NVIDIA GPU를 쓰도록 GL 확장 설치
 #    3. Godot을 Wayland 네이티브로 실행하는 래퍼 설치
-#    4. 한글 입력기(fcitx5) / Claude Code 상태 점검 (설치는 install.sh 담당)
+#    4. 한글 폰트(나눔고딕, Noto Sans CJK) 설치
+#    5. 한글 입력기(fcitx5) / Claude Code 상태 점검 (설치는 install.sh 담당)
 #
 #  사용법
 #    ./setup.sh                  # 전체 실행
 #    ./setup.sh --dry-run        # 실제 변경 없이 무엇을 할지 출력
 #    ./setup.sh --no-verify      # Blender GPU 확인(수십 초) 생략
 #    ./setup.sh --skip-ssh       # 특정 항목만 건너뛰기
-#                                #   --skip-blender --skip-godot
+#                                #   --skip-blender --skip-godot --skip-fonts
 # ============================================================
 
 set -euo pipefail
@@ -36,6 +37,7 @@ DO_VERIFY=1
 SKIP_SSH=0
 SKIP_BLENDER=0
 SKIP_GODOT=0
+SKIP_FONTS=0
 
 for arg in "$@"; do
     case "${arg}" in
@@ -44,6 +46,7 @@ for arg in "$@"; do
         --skip-ssh)     SKIP_SSH=1 ;;
         --skip-blender) SKIP_BLENDER=1 ;;
         --skip-godot)   SKIP_GODOT=1 ;;
+        --skip-fonts)   SKIP_FONTS=1 ;;
         -h|--help)      sed -n '2,21p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) echo "알 수 없는 옵션: ${arg}" >&2; exit 2 ;;
     esac
@@ -67,12 +70,20 @@ warn() { echo -e "    ${YELLOW}!${NC} $*"; }
 fail() { echo -e "    ${RED}✘${NC} $*"; }
 
 # sudo가 필요한 순간에만 비밀번호를 미리 받아둔다
+# (실패해도 스크립트 전체를 중단시키지 않고, 호출한 쪽에서 안내한다)
 ensure_sudo() {
     if [ "${DRY_RUN}" = "1" ]; then
         echo -e "    ${YELLOW}[dry-run]${NC} sudo -v"
         return 0
     fi
-    sudo -v
+    if sudo -n true 2>/dev/null; then
+        return 0
+    fi
+    if sudo -v 2>/dev/null; then
+        return 0
+    fi
+    fail "sudo 권한을 얻지 못했습니다."
+    return 1
 }
 
 echo -e "${BLUE}=====================================================${NC}"
@@ -85,7 +96,7 @@ echo -e "Dotfiles 경로: ${GREEN}${DOTFILES_DIR}${NC}\n"
 # 1. GitHub SSH 인증 키
 #    - 개인 키는 절대 이 저장소에 넣지 않는다. 없으면 새로 만든다.
 # ------------------------------------------------------------
-echo -e "${BLUE}[1/4] GitHub SSH 인증 키 준비 중...${NC}"
+echo -e "${BLUE}[1/5] GitHub SSH 인증 키 준비 중...${NC}"
 
 SSH_DIR="${USER_HOME}/.ssh"
 SSH_KEY="${SSH_DIR}/id_ed25519_github"
@@ -156,7 +167,7 @@ fi
 #    드라이버 버전과 일치하는 GL 확장이 없으면 Mesa llvmpipe(CPU)로
 #    떨어져 오브젝트가 없어도 심하게 느려진다.
 # ------------------------------------------------------------
-echo -e "\n${BLUE}[2/4] Blender(Flatpak) NVIDIA GPU 설정 중...${NC}"
+echo -e "\n${BLUE}[2/5] Blender(Flatpak) NVIDIA GPU 설정 중...${NC}"
 
 BLENDER_APP="org.blender.Blender"
 
@@ -198,9 +209,12 @@ else
                     fail "Blender가 CPU(llvmpipe)로 동작합니다. 드라이버를 낮추거나 네이티브 Blender를 사용하세요."
                 else
                     echo -e "    설치: ${GREEN}${INSTALL_TARGET}${NC}"
-                    ensure_sudo
-                    run sudo flatpak install -y flathub "${INSTALL_TARGET}"
-                    ok "NVIDIA GL 확장 설치 완료 (Blender 재시작 필요)"
+                    if ensure_sudo; then
+                        run sudo flatpak install -y flathub "${INSTALL_TARGET}"
+                        ok "NVIDIA GL 확장 설치 완료 (Blender 재시작 필요)"
+                    else
+                        warn "직접 설치하세요: ${GREEN}sudo flatpak install -y flathub ${INSTALL_TARGET}${NC}"
+                    fi
                 fi
             fi
 
@@ -228,7 +242,7 @@ fi
 #    Xwayland(X11) 경로는 프레임 표시가 소프트웨어로 처리되어
 #    같은 씬이 17 FPS → Wayland 75 FPS 로 차이난다.
 # ------------------------------------------------------------
-echo -e "\n${BLUE}[3/4] Godot Wayland 래퍼 설치 중...${NC}"
+echo -e "\n${BLUE}[3/5] Godot Wayland 래퍼 설치 중...${NC}"
 
 GODOT_WRAPPER="${USER_HOME}/.local/bin/godot"
 GODOT_DESKTOP="${USER_HOME}/.local/share/applications/godot.desktop"
@@ -273,11 +287,64 @@ else
 fi
 
 # ------------------------------------------------------------
-# 4. 점검: 한글 입력기(fcitx5) / Claude Code
+# 4. 한글 폰트 (나눔고딕 / Noto Sans CJK)
+#    - fonts-nanum       : NanumGothic, NanumMyeongjo 등
+#    - fonts-noto-cjk    : Noto Sans/Serif CJK KR (본고딕 계열)
+#    이미 설치되어 있으면 건너뛴다.
+# ------------------------------------------------------------
+echo -e "\n${BLUE}[4/5] 한글 폰트 설치 중...${NC}"
+
+if [ "${SKIP_FONTS}" = "1" ]; then
+    warn "건너뜀 (--skip-fonts)"
+elif ! command -v apt-get >/dev/null 2>&1; then
+    warn "apt-get 이 없어 폰트 설치를 건너뜁니다."
+else
+    MISSING_FONTS=()
+    for pkg in fonts-nanum fonts-noto-cjk; do
+        if dpkg -s "${pkg}" >/dev/null 2>&1; then
+            ok "${pkg} 이미 설치됨"
+        else
+            MISSING_FONTS+=("${pkg}")
+            warn "${pkg} 없음 → 설치 예정"
+        fi
+    done
+
+    if [ "${#MISSING_FONTS[@]}" -gt 0 ]; then
+        if ensure_sudo; then
+            run sudo apt-get update -y
+            run sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y "${MISSING_FONTS[@]}"
+            run fc-cache -f
+            ok "폰트 설치 완료: ${MISSING_FONTS[*]}"
+        else
+            warn "직접 설치하세요: ${GREEN}sudo apt-get install -y ${MISSING_FONTS[*]}${NC}"
+        fi
+    fi
+
+    # 실제로 폰트 패밀리가 인식되는지 확인
+    if [ "${DRY_RUN}" != "1" ]; then
+        FONT_FAMILIES="$(fc-list : family 2>/dev/null | tr ',' '\n' | sed 's/^ *//' || true)"
+        if echo "${FONT_FAMILIES}" | grep -qx 'NanumGothic'; then
+            ok "NanumGothic 인식됨"
+        else
+            warn "NanumGothic 이 아직 인식되지 않습니다. (로그아웃 후 또는 'fc-cache -f' 재실행)"
+        fi
+        if echo "${FONT_FAMILIES}" | grep -qi 'Noto Sans CJK KR'; then
+            ok "Noto Sans CJK KR 인식됨"
+        else
+            warn "Noto Sans CJK KR 이 아직 인식되지 않습니다."
+        fi
+    fi
+
+    echo -e "    확인: ${GREEN}fc-list | grep -i nanum${NC}"
+    echo -e "    KDE 글꼴 설정: ${GREEN}시스템 설정 → 모양 → 글꼴${NC}"
+fi
+
+# ------------------------------------------------------------
+# 5. 점검: 한글 입력기(fcitx5) / Claude Code
 #    실제 설치와 설정 복사는 install.sh 가 담당한다. 여기서는
 #    "Right Alt 한/영 전환"이 제대로 걸려 있는지만 확인한다.
 # ------------------------------------------------------------
-echo -e "\n${BLUE}[4/4] 한글 입력기 / Claude Code 상태 점검${NC}"
+echo -e "\n${BLUE}[5/5] 한글 입력기 / Claude Code 상태 점검${NC}"
 
 # fcitx5
 if ! command -v fcitx5 >/dev/null 2>&1; then
@@ -337,6 +404,7 @@ echo -e "${GREEN}=====================================================${NC}"
 echo -e "  • GitHub SSH 키 : ${SSH_KEY}"
 echo -e "  • Blender       : Flatpak NVIDIA GL 확장"
 echo -e "  • Godot         : ${GODOT_WRAPPER} (Wayland)"
+echo -e "  • 폰트          : NanumGothic, Noto Sans CJK KR"
 echo -e "  • fcitx5        : Right Alt = 한/영 (install.sh 담당)"
 echo
 echo -e "${YELLOW}※ Blender/Godot은 실행 중이던 프로세스를 완전히 종료해야 적용됩니다.${NC}"

@@ -14,7 +14,7 @@ echo -e "${GREEN}     Dotfiles + 시스템 설정 한 번에 설치 (all-in-one)
 echo -e "${BLUE}=====================================================${NC}"
 echo "실행 항목:"
 echo "  1. install.sh  (KDE 테마/단축키, fcitx5 한글 입력기, Claude Code, 캡티브 포털)"
-echo "  2. setup.sh    (GitHub SSH 키, Blender NVIDIA GPU, Godot Wayland, 입력기 점검)"
+echo "  2. setup.sh    (GitHub SSH 키, Blender NVIDIA GPU, Godot Wayland, 한글 폰트, 입력기 점검)"
 echo "  3. RAM 용량에 맞는 메모리 최적화 (ZRAM + Swap + 전원 튜닝)"
 echo -e "${YELLOW}  ※ install-apps.sh (Vivaldi, VS Code, Godot 등)는 제외됩니다.${NC}"
 echo -e "${BLUE}-----------------------------------------------------${NC}\n"
